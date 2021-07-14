@@ -9,28 +9,36 @@
     <atom:link href="http://example.com/rss2.xml" rel="self" type="application/rss+xml"/>
     
     <description>不聚不散</description>
-    <pubDate>Sat, 06 Mar 2021 03:25:16 GMT</pubDate>
+    <pubDate>Wed, 14 Jul 2021 09:32:22 GMT</pubDate>
     <generator>http://hexo.io/</generator>
     
     <item>
-      <title>Hello World</title>
-      <link>http://example.com/2021/03/06/hello-world/</link>
-      <guid>http://example.com/2021/03/06/hello-world/</guid>
-      <pubDate>Sat, 06 Mar 2021 03:25:16 GMT</pubDate>
+      <title>Mysql学习</title>
+      <link>http://example.com/2021/07/14/Mysql/</link>
+      <guid>http://example.com/2021/07/14/Mysql/</guid>
+      <pubDate>Tue, 13 Jul 2021 16:00:00 GMT</pubDate>
       
         
         
-      <description>&lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a href=&quot;https://hexo.io/docs/&quot;&gt;documentation&lt;/a&gt; for</description>
+      <description>&lt;h1 id=&quot;Mysql&quot;&gt;&lt;a href=&quot;#Mysql&quot; class=&quot;headerlink&quot; title=&quot;Mysql&quot;&gt;&lt;/a&gt;Mysql&lt;/h1&gt;&lt;blockquote&gt;
+&lt;p&gt;端口（默认）&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;文件下载：21&lt;/p&gt;
+&lt;p&gt;上网：</description>
         
       
       
       
-      <content:encoded><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content:encoded>
+      <content:encoded><![CDATA[<h1 id="Mysql"><a href="#Mysql" class="headerlink" title="Mysql"></a>Mysql</h1><blockquote><p>端口（默认）</p><blockquote><p>文件下载：21</p><p>上网：80</p><p>mysql:3306</p><p>oracle:1521</p></blockquote></blockquote><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><ul><li><p>DB：Database（数据库）</p></li><li><p>DBMS： Database  Management System（数据库管理系统 常见：oracle ==mysql== sqlserver……)</p></li><li><p>SQL：结构化查询语言（sql语句执行时都会编译，由DBMS完成）</p></li><li><p>DBMS –&gt;（执行）–&gt; SQL –&gt; （操作） –&gt; DB</p></li></ul><h2 id="1、表（Table）"><a href="#1、表（Table）" class="headerlink" title="1、表（Table）"></a>1、表（Table）</h2><blockquote><p>表由俩个部分组成，字段和数据。行为数据/记录，列为字段。</p><p>每个字段都应该包括的属性：字段名，数据类型，相关的约束。</p></blockquote><h2 id="2、SQL语句"><a href="#2、SQL语句" class="headerlink" title="2、SQL语句"></a>2、SQL语句</h2><ul><li>DQL（数据查询语言）：查询语句，凡是select语句都是DQL.</li><li>DCL（数据操作语言）： insert delete update，对标当中的数据进行增删改。</li><li>DDL（数据定义语言）： create drop alter， 对表结构的增删改。</li><li>TCL（事务控制语言）： commit（提交事务）rollback（回滚事务）</li><li>DCL（数据控制语言）： grant(授权） revoke（撤销权限）</li></ul><h2 id="3、mysql命令"><a href="#3、mysql命令" class="headerlink" title="3、mysql命令"></a>3、mysql命令</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">MYSQL -uroot -p123456 \\登录</span><br><span class="line">SHOW DATABASES;  \\查看数据库</span><br><span class="line">CREATE DATABASE test1;\\创建一个数据库</span><br><span class="line">USE test1;\\使用数据库</span><br><span class="line">SHOW TABLES;\\查看数据表</span><br><span class="line">SOURCE D:\bjpowernode.sql \\导入数据（外部提供）</span><br><span class="line">+-----------------+</span><br><span class="line">| Tables_in_test1 |</span><br><span class="line">+-----------------+</span><br><span class="line">| dept            |（部门表）</span><br><span class="line">| emp             |（员工表）</span><br><span class="line">| sqlgrade        |（工资等级表）</span><br><span class="line">+-----------------+</span><br><span class="line">DESC dept;</span><br><span class="line">DESC emp;</span><br><span class="line">DESC sqlgrade;</span><br></pre></td></tr></table></figure><blockquote><p>SHOW：</p><p>CREATE： 创建表</p><p>USE:： 使用表</p><p>SOURCE： 导入SQL脚本</p><p>DESC： 展示表结构</p></blockquote><h3 id="导入表简介"><a href="#导入表简介" class="headerlink" title="导入表简介"></a>导入表简介</h3><h4 id="1、dept（部门表）"><a href="#1、dept（部门表）" class="headerlink" title="1、dept（部门表）"></a>1、dept（部门表）</h4><p>+————+—————-+——+——+———-+——-+<br>| Field       | Type           | Null  | Key  | Default| Extra|<br>+————+—————-+——+——+———-+——-+<br>| DEPTNO| int(2)           | NO  | PRI  | NULL   |         |        部门编号<br>| DNAME  | varchar(14) | YES|         | NULL   |         |        部门名称<br>| LOC        | varchar(13) | YES|         | NULL   |         |        部门位置<br>+————+—————-+——+——-+———-+——+</p>]]></content:encoded>
       
       
+      <category domain="http://example.com/categories/Mysql/">Mysql</category>
       
       
-      <comments>http://example.com/2021/03/06/hello-world/#disqus_thread</comments>
+      <category domain="http://example.com/tags/Mysql/">Mysql</category>
+      
+      
+      <comments>http://example.com/2021/07/14/Mysql/#disqus_thread</comments>
       
     </item>
     
