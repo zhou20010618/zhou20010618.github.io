@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/icon2.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="管道符、重定向与环境变量管道命令符”|”管道命令符“|”的作用是将前一个命令的标准输出当做后一个命令的标准输入，格式为”命令A|命令B“。 例如前面学习的grep命令匹配关键词(&#x2F;sbin&#x2F;login)找出所有被限制登录系统的用户，如果我们希望统计所有不允许登录系统的用户个数，该怎么做呢： 首先理清思路： 找出被限制登录用户的命令：grep “&#x2F;sbin&#x2F;n">
+<meta property="og:type" content="article">
+<meta property="og:title" content="管道符、重定向和环境变量">
+<meta property="og:url" content="http://example.com/2024/06/07/%E7%AE%A1%E9%81%93%E7%AC%A6%E3%80%81%E9%87%8D%E5%AE%9A%E5%90%91%E5%92%8C%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F/index.html">
+<meta property="og:site_name" content="颂">
+<meta property="og:description" content="管道符、重定向与环境变量管道命令符”|”管道命令符“|”的作用是将前一个命令的标准输出当做后一个命令的标准输入，格式为”命令A|命令B“。 例如前面学习的grep命令匹配关键词(&#x2F;sbin&#x2F;login)找出所有被限制登录系统的用户，如果我们希望统计所有不允许登录系统的用户个数，该怎么做呢： 首先理清思路： 找出被限制登录用户的命令：grep “&#x2F;sbin&#x2F;n">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-06-07T01:12:58.000Z">
+<meta property="article:modified_time" content="2024-06-07T01:21:51.445Z">
+<meta property="article:author" content="zhou">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2024/06/07/%E7%AE%A1%E9%81%93%E7%AC%A6%E3%80%81%E9%87%8D%E5%AE%9A%E5%90%91%E5%92%8C%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>管道符、重定向和环境变量 | 颂</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">颂</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/06/07/%E7%AE%A1%E9%81%93%E7%AC%A6%E3%80%81%E9%87%8D%E5%AE%9A%E5%90%91%E5%92%8C%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/touxiang.jpg">
+      <meta itemprop="name" content="zhou">
+      <meta itemprop="description" content="不聚不散">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="颂">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          管道符、重定向和环境变量
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-06-07 09:12:58 / 修改时间：09:21:51" itemprop="dateCreated datePublished" datetime="2024-06-07T09:12:58+08:00">2024-06-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="管道符、重定向与环境变量"><a href="#管道符、重定向与环境变量" class="headerlink" title="管道符、重定向与环境变量"></a>管道符、重定向与环境变量</h1><h2 id="管道命令符”-”"><a href="#管道命令符”-”" class="headerlink" title="管道命令符”|”"></a>管道命令符”|”</h2><p>管道命令符“|”的作用是将前一个命令的<u>标准输出</u>当做后一个命令的<u>标准输入</u>，格式为”<u>命令A|命令B</u>“。</p>
+<p>例如前面学习的grep命令匹配关键词(&#x2F;sbin&#x2F;login)找出所有被限制登录系统的用户，如果我们希望统计所有不允许登录系统的用户个数，该怎么做呢：</p>
+<p>首先理清思路：</p>
+<p>找出被限制登录用户的命令：grep “&#x2F;sbin&#x2F;nologin” &#x2F;etc&#x2F;passwd</p>
+<p>统计文本行数的命令则是：wc -l</p>
+<p>现在要做的事就是将搜索命令的输出值传递给统计命令，其实只要把管道符夹在中间就可以了。</p>
+<p>因此结果即为：grep “&#x2F;sbin.nologin&#x2F;” &#x2F;etc&#x2F;passwd | wc -l</p>
+<p>以下为部分管道符使用例子：</p>
+<p>1、用翻页的形式查看&#x2F;etc目录中又哪些文件</p>
+<p>ls -l &#x2F;etc | more</p>
+<p>2、向linuxprobe用户发送一封邮件</p>
+<p>echo “content” | mail -s “Subject” linuxprobe</p>
+<p>3、使用非交互式设置用户密码，将root的密码修改为linuxprobe</p>
+<p>echo “linuxprobe” | passwd -stdin root</p>
+<h2 id="输入输出重定向"><a href="#输入输出重定向" class="headerlink" title="输入输出重定向"></a>输入输出重定向</h2><p>先做一个简单的演示</p>
+<p>查看linuxprobe目录的信息：</p>
+<p>ls linuxprobe&#x2F;</p>
+<p>(……文件信息)</p>
+<p>ls xxxxx&#x2F;</p>
+<p>ls: cannot access xxxxx:no such file or directory</p>
+<p>[前者执行后返回的是<u>标准输出</u>,后者执行失败返回的是<u>错误输出</u>]</p>
+<p>标准输入(STDIN,文件描述符为0：默认从键盘输入，为0时表示是从其它文件或命令的输出<br>标准输出(STDOUT,文件描述符为1)：默认输出到屏幕，为1时表示是文件<br>错误输出(STDERR，文件描述符为2)：默认输出到屏幕，为2时表示是文件</p>
+<p>对于输出重定向符有这些情况：</p>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>命令 &gt; 文件</td>
+<td>将标准输出重定向到一个文件中（清空原有文件的数据）</td>
+</tr>
+<tr>
+<td>命令 2&gt; 文件</td>
+<td>将错误输出重定向到一个文件中(清空原有文件的数据)</td>
+</tr>
+<tr>
+<td>命令 &gt;&gt; 文件</td>
+<td>将标准输出重定向到一个文件中(追加到原有内容的后面)</td>
+</tr>
+<tr>
+<td>命令 2&gt;&gt; 文件</td>
+<td>将错误标准输出重定向到一个文件中(追加到原有内容的后面)</td>
+</tr>
+<tr>
+<td>命令 &gt;&gt; 文件 2&gt;$1</td>
+<td>将标准输出与错误输出共同写入到文件中(追加到原有内容的后面)</td>
+</tr>
+</tbody></table>
+<p>对于输入重定向有这些情况：</p>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>命令 &lt; 文件</td>
+<td>将文件作为命令的标准输入</td>
+</tr>
+<tr>
+<td>命令 &lt;&lt; 分界符</td>
+<td>从标准输入中读入，知道遇见“分界符”才停止</td>
+</tr>
+<tr>
+<td>命令 &lt; 文件1 &gt; 文件2</td>
+<td>将文件1作为命令的标准输入并将标准输出到文件2</td>
+</tr>
+</tbody></table>
+<p>那么来做几个输出和输入重定向的实验：</p>
+<p>1、将man命令的帮助文档写入到&#x2F;root&#x2F;man.txt中：</p>
+<p>man bash &gt; &#x2F;root&#x2F;man.txt</p>
+<p>2、向readme.txt追加一行文字</p>
+<p>echo ”test” &gt;&gt; readme.txt</p>
+<p>3、将readme.txt文件作为输入重定向给 wc -l 命令来计算行数</p>
+<p>wl -l &lt; readme.txt</p>
+<h2 id="命令行通配符"><a href="#命令行通配符" class="headerlink" title="命令行通配符"></a>命令行通配符</h2><table>
+<thead>
+<tr>
+<th>通配符</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>*</td>
+<td>匹配零个或多个字符</td>
+</tr>
+<tr>
+<td>？</td>
+<td>匹配任意单个字符</td>
+</tr>
+<tr>
+<td>[0-9]</td>
+<td>匹配范围内的数字</td>
+</tr>
+<tr>
+<td>[abc]</td>
+<td>匹配已出额度任意字符</td>
+</tr>
+</tbody></table>
+<p>bash解释器还支持很多的特殊字符拓展：</p>
+<table>
+<thead>
+<tr>
+<th>字符</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>\ (反斜杠)</td>
+<td>转义后面单个字符，例如$是变量定一个符号会报错，可以通过\来进行转义</td>
+</tr>
+<tr>
+<td>‘’(单引号)</td>
+<td>转义所有的字符</td>
+</tr>
+<tr>
+<td>“”(双引号)</td>
+<td>变量依然生效</td>
+</tr>
+<tr>
+<td>“(反引号)</td>
+<td>执行命令语句</td>
+</tr>
+</tbody></table>
+<p>1、定义一个变量</p>
+<p>Price&#x3D;5</p>
+<p>2、输出Price is 5</p>
+<p>echo “Price is $Price”</p>
+<p>3、但如果想要输出Price is 5，就会因为是变量定义而报错，这时候可以使用转义字符\</p>
+<p>echo “Price is $$Price”</p>
+<p>4、使用单引号，变量将不再被取代</p>
+<p>echo ‘Price is $$Price’</p>
+<p>Price is $$Price</p>
+<p>5、执行uname -a 后可以查看到本机内核的版本与架构 (反引号里面的命令会被执行)：</p>
+<p>echo ’uname -a’</p>
+<h2 id="PATH变量"><a href="#PATH变量" class="headerlink" title="PATH变量"></a>PATH变量</h2><p>在linux中一切都是文件，命令文件也不例外，在用户执行一条’ls’命令后发生了什么：</p>
+<p>1、如果是以绝对&#x2F;相对路径输入的命令则直接执行(如执行&#x2F;bin&#x2F;ls)</p>
+<p>2、检查是否为alias别名命令</p>
+<p>3、有bash判断其是’内部命令’还是’外部命令’</p>
+<p>内部命令：属于解释器内部的</p>
+<p>外部命令：独立于解释器外的命令文件</p>
+<p>4、通过$PATH变量中定义的路径进行命令查找</p>
+<p>查看PATH变量的方法：echo PATH</p>
+<p>使用 ‘type 命令名字’来得知是内部命令还是外部命令</p>
+<p>在$PATH中目录之间用 : 间隔开了</p>
+<p>为变量增加新的值：PATH&#x3D;$PATH:[路径]</p>
+<h2 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h2><table>
+<thead>
+<tr>
+<th>变量名称</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HOME</td>
+<td>用户的主目录”家”</td>
+</tr>
+<tr>
+<td>SHELL</td>
+<td>当前的shell是哪个程序</td>
+</tr>
+<tr>
+<td>HISTSIZE</td>
+<td>历史命令记录条数</td>
+</tr>
+<tr>
+<td>MAIL</td>
+<td>右键信箱文件</td>
+</tr>
+<tr>
+<td>LANG</td>
+<td>语系数据</td>
+</tr>
+<tr>
+<td>RANDOM</td>
+<td>随机数字</td>
+</tr>
+<tr>
+<td>PS1</td>
+<td>bash提示符</td>
+</tr>
+<tr>
+<td>HISTFILESIZE</td>
+<td>history命令存储数量</td>
+</tr>
+<tr>
+<td>PATH</td>
+<td>在路径中得目录查找执行文件</td>
+</tr>
+<tr>
+<td>EDITOR</td>
+<td>默认文本编辑器</td>
+</tr>
+<tr>
+<td>HOME</td>
+<td>用户主目录</td>
+</tr>
+</tbody></table>
+<p>创建变量：[变量名]&#x3D;[提供的值]</p>
+<p>用户创建的变量只是局部变量，若要别的用户也能使用可以通过export提升至全局变量</p>
+<h2 id="了解vim编辑器"><a href="#了解vim编辑器" class="headerlink" title="了解vim编辑器"></a>了解vim编辑器</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>dd</td>
+<td>删除(剪切)光标所在的整行</td>
+</tr>
+<tr>
+<td>5dd</td>
+<td>删除(剪切)从光标处开始的5行</td>
+</tr>
+<tr>
+<td>yy</td>
+<td>复制光标所在整行</td>
+</tr>
+<tr>
+<td>5yy</td>
+<td>复制从光标处开始的5行</td>
+</tr>
+<tr>
+<td>p</td>
+<td>将之前删除(dd)或符直(yy)过的数据贴到光标后</td>
+</tr>
+<tr>
+<td>&#x2F;字符串</td>
+<td>在文本中从上至下搜索该字符串</td>
+</tr>
+<tr>
+<td>?字符串</td>
+<td>在文本中从下至上搜索该字符串</td>
+</tr>
+<tr>
+<td>n</td>
+<td>显示搜索命令定位到的下一个字符串</td>
+</tr>
+<tr>
+<td>N</td>
+<td>显示搜索命令定位到的上一个字符串</td>
+</tr>
+<tr>
+<td>u</td>
+<td>撤销上一步的操作</td>
+</tr>
+</tbody></table>
+<p>vim编辑器的末行模式中的常用命令：</p>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>:w</td>
+<td>保存</td>
+</tr>
+<tr>
+<td>:q</td>
+<td>推出</td>
+</tr>
+<tr>
+<td>:q!</td>
+<td>强制退出(放弃对文本的修改内容)</td>
+</tr>
+<tr>
+<td>:wq!</td>
+<td>强制保存退出</td>
+</tr>
+<tr>
+<td>:set nu</td>
+<td>显示行号</td>
+</tr>
+<tr>
+<td>:命令</td>
+<td>执行该命令</td>
+</tr>
+<tr>
+<td>:整数</td>
+<td>跳转到该行</td>
+</tr>
+</tbody></table>
+<h2 id="配置网卡信息"><a href="#配置网卡信息" class="headerlink" title="配置网卡信息"></a>配置网卡信息</h2><p>网卡配置文件的前缀为 “eth”，第一块为eth0，第二块为eht1，以此类推……</p>
+<p>在RHEL7系统中网卡配置文件的前缀则为ifcfg-eno</p>
+<blockquote>
+<p>网卡的配置文件存放在 &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts目录中</p>
+<p>网卡配置文件关键词术语：</p>
+<p>网卡类型：TYPE&#x3D;Ethernet</p>
+<p>地址分配模式：BOOTPROTO&#x3D;static</p>
+<p>网卡名称：NAME&#x3D;eno…..<br>是否启动：onboot&#x3D;yes</p>
+<p>IP地址：IPADDR&#x3D;X.X.X.X</p>
+<p>子网掩码：NETMASK&#x3D;X.X.X.X</p>
+<p>网卡地址：GATEWAY&#x3D;192.168.10.1</p>
+<p>DNS地址：DNS1&#x3D;192.168.10.1</p>
+</blockquote>
+<blockquote>
+<p>配置网卡信息简单思路：</p>
+<p>1、切换到 &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts 目录中</p>
+<p>2、使用vim命令修改网卡配置文件 ifcfg-eno…</p>
+<p>3、逐项写入配置参数，并保存退出</p>
+<p>4、重新启动网卡命令 systemctl restart network</p>
+<p>5、通过ping命令测试网卡信息是否生效</p>
+</blockquote>
+<h2 id="配置yum仓库"><a href="#配置yum仓库" class="headerlink" title="配置yum仓库"></a>配置yum仓库</h2><blockquote>
+<p>配置光盘yum源挂载：</p>
+<p>1、切换到 &#x2F;etc&#x2F;yum.repos.d 目录(该目录存放yum仓库配置文件)</p>
+<p>2、使用vim编辑器创建并打开一个名为 xxx.repo的新文件，名称自定义，后缀为repo</p>
+<p>3、逐项写入配置参数，并保存退出</p>
+<p>4、按配置参数的路径将光盘挂在</p>
+<p>5、架构光盘挂载信息写入到&#x2F;etc&#x2F;fstab文件中</p>
+<p>6、使用yum install https -y 命令检查是否配置正确</p>
+</blockquote>
+<p>简单的repo文件配置：</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[test]</span><br><span class="line">name=test</span><br><span class="line">baseurl=<span class="keyword">file</span>:///media/cdrom</span><br><span class="line">enabled=<span class="number">1</span></span><br><span class="line">gpgcheck=<span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<p>创建光盘的挂载目录：</p>
+<p>mkdir -p &#x2F;media&#x2F;cdrom</p>
+<p>挂载光盘：</p>
+<p>mount &#x2F;dev&#x2F;cdrom &#x2F;media&#x2F;cdrom</p>
+<p>设置开机自动挂载：</p>
+<p>vim &#x2F;etc&#x2F;fstab</p>
+<p>&#x2F;dev&#x2F;cdrom &#x2F;media&#x2F;cdrom iso9660 defaults 0 0</p>
+<h2 id="了解shell脚本"><a href="#了解shell脚本" class="headerlink" title="了解shell脚本"></a>了解shell脚本</h2><p>查看系统中所有可用的shell解释器：</p>
+<p>cat &#x2F;etc&#x2F;shells</p>
+<p>查看当前的shell解释器：</p>
+<p>echo $SHELL</p>
+<h3 id="编译简单的脚本"><a href="#编译简单的脚本" class="headerlink" title="编译简单的脚本"></a>编译简单的脚本</h3><p>shell脚本的编写要使用到vim文本编辑器，按照命令的执行顺序一次编写，每行写一条linux命令。并且一个完整的shell脚本则应该包括”脚本声明”、”注释信息”和”可执行语句”。</p>
+<p>脚本声明(#!)：告知系统用何种shell来解释</p>
+<p>注释信息(#)：对可执行语句或程序功能做介绍，可以不写</p>
+<p>可执行语句：执行的具体命令</p>
+<p>一个简单的shell脚本示例：</p>
+<p>vim example.sh</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">显示当前的工作路径并列出当前目录下的所有文件与属性</span></span><br><span class="line">pwd</span><br><span class="line">ls -al</span><br></pre></td></tr></table></figure>
+
+<p>执行脚本有三种方法：</p>
+<p>1、脚本文件路径：&#x2F;example.sh</p>
+<p>2、sh脚本文件路径：sh example.sh</p>
+<p>3、source脚本文件路径：source example.sh</p>
+<p>(只要脚本文件路径没有写错，sh或source命令都可以直接执行改脚本，但一般来说可能会出现权限不足的错误，所以需要使用chmod来赋予权限)</p>
+<p>chmod u+x example.sh</p>
+<h3 id="接收用户的参数"><a href="#接收用户的参数" class="headerlink" title="接收用户的参数"></a>接收用户的参数</h3><p>shell脚本能够让用户更灵活的完成工作需求，应该有办法接受用户输入的参数，像上面的脚本的写法真的很不灵活</p>
+<p>在可执行文件中已经内设：命令名 参数1 参数2 参数3</p>
+<table>
+<thead>
+<tr>
+<th>$0</th>
+<th>当前执行的shell脚本的程序名</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$1-9,{10},{11}…</td>
+<td>参数的位置变量</td>
+</tr>
+<tr>
+<td>$#</td>
+<td>一共有多少个变量</td>
+</tr>
+<tr>
+<td>$**</td>
+<td>所有位置变量的值</td>
+</tr>
+<tr>
+<td>$?</td>
+<td>判断上一条命令是否执行成功，0为成功，非0为失败</td>
+</tr>
+</tbody></table>
+<p>一个可以接收用户参数的shell脚本：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">echo &quot;当前脚本名称为$0&quot;</span><br><span class="line">echo &quot;总共有$#个参数，分别是$*&quot;</span><br><span class="line">echo &quot;第一个参数为$!,第五个为$5&quot;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">[root@zhou tmp]# sh example.sh 1 2 3 4 5</span><br><span class="line">当前脚本名称为example.sh</span><br><span class="line">总共有5个参数，分别是1 2 3 4 5</span><br><span class="line">第一个参数为,第五个为5</span><br></pre></td></tr></table></figure>
+
+<h3 id="判断用户的参数"><a href="#判断用户的参数" class="headerlink" title="判断用户的参数"></a>判断用户的参数</h3><p>shell脚本有时还要判断用户输入的参数，例如像mkdir命令一眼，当目录不存在则创建，若已存在则报错，条件测试语句能够测试特定的表达式是否成立，当条件成立时返回值0，否则返回其他数值</p>
+<p>测试语句格式：[ 条件表达式 ] (需要注意的是两边均应有一个空格)</p>
+<p>细分测试语句有：文件测试、逻辑测试、整数值比较、字符串比较</p>
+<p>文件测试：[ 操作符 文件或目录名 ]</p>
+<table>
+<thead>
+<tr>
+<th>操作符</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-d</td>
+<td>测试是否为目录</td>
+</tr>
+<tr>
+<td>-e</td>
+<td>测试文件或目录是否存在</td>
+</tr>
+<tr>
+<td>-f</td>
+<td>判断是否为文件</td>
+</tr>
+<tr>
+<td>-r</td>
+<td>测试当前用户是否有权限读取</td>
+</tr>
+<tr>
+<td>-w</td>
+<td>测试当前用户是否有权限写入</td>
+</tr>
+<tr>
+<td>-x</td>
+<td>测试当前用户是否有权限执行</td>
+</tr>
+</tbody></table>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@zhou tmp]# [ -d /etc/fstab ]</span><br><span class="line">[root@zhou tmp]# echo $?          </span><br><span class="line">1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">[root@zhou tmp]# [ -f /etc/fstab ]</span><br><span class="line">[root@zhou tmp]# echo $?          </span><br><span class="line">0</span><br></pre></td></tr></table></figure>
+
+<p>符号&amp;&amp;代表逻辑上的”与”，当前面的命令执行成功后才会执行后面的命令</p>
+<p>判断&#x2F;dev&#x2F;stdin是否存在，若存在则输出exist</p>
+<p>[root@zhou ~]# [ -e &#x2F;dev&#x2F;stdin ] &amp;&amp; echo “exist”<br>exist</p>
+<p>逻辑测试：[ 表达式1 ] 操作符 [ 表达式2 ]</p>
+<table>
+<thead>
+<tr>
+<th>操作符</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&amp;&amp;</td>
+<td>逻辑的与，”而且”的意思</td>
+</tr>
+<tr>
+<td></td>
+<td>\</td>
+</tr>
+<tr>
+<td>!</td>
+<td>逻辑的否</td>
+</tr>
+</tbody></table>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">USER变量是当前登录的用户名</span><br><span class="line">[root@zhou ~]# echo $USER                      </span><br><span class="line">root</span><br><span class="line"></span><br><span class="line">若当前登录的用户不是root，输出user，是root则为空</span><br><span class="line">[root@zhou ~]# [ $USER! = root ] &amp;&amp; echo &quot;user&quot;  </span><br><span class="line"></span><br><span class="line">非root输出user，root输出root</span><br><span class="line">[root@zhou ~]# [ $USER! = root ] &amp;&amp; echo &quot;user&quot; || echo &quot;root&quot;</span><br></pre></td></tr></table></figure>
+
+<p>整数值比较：[ 整数1 操作符 整数2 ]</p>
+<table>
+<thead>
+<tr>
+<th>操作符</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-eq</td>
+<td>判断是否等于</td>
+</tr>
+<tr>
+<td>-ne</td>
+<td>判断是否不等于</td>
+</tr>
+<tr>
+<td>-gt</td>
+<td>判断是否大于</td>
+</tr>
+<tr>
+<td>-lt</td>
+<td>判断是否小于</td>
+</tr>
+<tr>
+<td>-le</td>
+<td>哦安短是否等于或小于</td>
+</tr>
+<tr>
+<td>-ge</td>
+<td>判断是否大于或等于</td>
+</tr>
+</tbody></table>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">比较10是否大于10</span><br><span class="line">[root@zhou ~]# [ 10 -gt 10 ] </span><br><span class="line">[root@zhou ~]# echo $?</span><br><span class="line">1</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">显示上一条命令执行失败，10不大于10</span></span><br><span class="line"></span><br><span class="line">比较10是否等于10</span><br><span class="line">[root@zhou ~]# [ 10 -eq 10 ]</span><br><span class="line">[root@zhou ~]# echo $?</span><br><span class="line">0</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">获取当前可用的内存量，并将此值赋值给变量freemem</span><br><span class="line">首先用free-m查看以m为单位的内存使用情况</span><br><span class="line">然后grep cache过滤出剩余内存的行</span><br><span class="line">最后用awk &#x27;&#123;print $3&#125;&#x27;过滤只保留第三列</span><br><span class="line">而freemen=&#x27;语句&#x27;则表示执行里面的雨具后赋值给变量</span><br></pre></td></tr></table></figure>
+
+<p>字符串比较：[字符串 1 操作符 字符串2]</p>
+<table>
+<thead>
+<tr>
+<th>操作符</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&#x3D;</td>
+<td>比较字符串内容是否相同</td>
+</tr>
+<tr>
+<td>!&#x3D;</td>
+<td>比较字符串内容是否不同</td>
+</tr>
+<tr>
+<td>-z</td>
+<td>判断字符串内容是否为空</td>
+</tr>
+</tbody></table>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">判断string变量是否为空</span></span><br><span class="line">[root@zhou tmp]# [ -z $string ]</span><br><span class="line">[root@zhou tmp]# echo $?</span><br><span class="line">0</span><br></pre></td></tr></table></figure>
+
+<h3 id="条件测试语句"><a href="#条件测试语句" class="headerlink" title="条件测试语句"></a>条件测试语句</h3><h4 id="if条件语句"><a href="#if条件语句" class="headerlink" title="if条件语句"></a>if条件语句</h4><p>if条件语句分为 单分支结构、双分支结构、多分支结构</p>
+<p>单分支结构：仅用if、then、fi关键词组成，只在条件成立后执行</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">DIR=&quot;/media/cdrom&quot;</span><br><span class="line">if [ ! -e $DIR ]</span><br><span class="line">then</span><br><span class="line">mkdir -p $DIR</span><br><span class="line">fi</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">判断目录是否存在，若不存在则自动创建</span></span><br></pre></td></tr></table></figure>
+
+<p>双分支结构：由if、then、else、fi关键词组成，做条件成立或条件不成立的判断</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">ping -c 3 -i 0.2 -W 3 $1 &amp;&gt; /dev/null</span><br><span class="line">if [ $? -eq 0 ]</span><br><span class="line">then </span><br><span class="line">echo &quot;host $1 is up&quot;</span><br><span class="line">else</span><br><span class="line">echo &quot;host $1 is down&quot;</span><br><span class="line">fi</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"> #</span><span class="language-bash">判断主机能否ping通，根据返回结果分别给予提示或警告</span></span><br><span class="line"> ping -c 代表发送的数据包额度个数</span><br><span class="line"> ping -i 代表每0.2秒发送一个数据包</span><br><span class="line"> ping -W 代表3秒即超时</span><br><span class="line"><span class="meta prompt_"> $</span><span class="language-bash">1为用户输入额度第一个参数</span></span><br><span class="line"><span class="meta prompt_"> $</span><span class="language-bash">?为上一条命令的执行结果，判断是否等于0(0为成功)</span></span><br></pre></td></tr></table></figure>
+
+<p>多分支结构：是有if、then、else、elif、fi关键词组成，根据多种条件成立的可能性执行不同的操作</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">read -p &quot;Enter your score (0-100): &quot; GRADE</span><br><span class="line">if [ $GRADE -ge 85 ] &amp;&amp; [ $GRADE -le 100 ];then</span><br><span class="line">echo &quot;$GRADE is Excellent&quot;</span><br><span class="line">elif [ $GRADE -ge 70 ] &amp;&amp; [ $GRADE -le 84 ];then</span><br><span class="line">echo &quot;$GRADE is PASS&quot;</span><br><span class="line">else echo &quot;$GRADE is Fail&quot;</span><br><span class="line">fi</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"> #</span><span class="language-bash">判断用户呼入的分数在哪个区间内，然后判定为优秀、合格或不合格</span></span><br><span class="line"> 使用read命令让用户为GRADE变量赋值</span><br><span class="line"> 大于85小于100输出excellent</span><br><span class="line"> 大于70小于84输出pass</span><br><span class="line"> 其余情况输出fail</span><br></pre></td></tr></table></figure>
+
+<h4 id="for条件语句"><a href="#for条件语句" class="headerlink" title="for条件语句"></a>for条件语句</h4><p>for条件语句会先读取多个不同的变量值，然后逐一执行同一组命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">创建用户名文件</span><br><span class="line">[root@zhou tmp]# vim test.txt </span><br><span class="line">andy</span><br><span class="line">barry</span><br><span class="line">carl</span><br><span class="line">duke</span><br><span class="line">eric</span><br><span class="line">george</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">read -p &quot;Enter the password: &quot; PASSWD</span><br><span class="line">for UNAME in `cat test.txt`</span><br><span class="line">do</span><br><span class="line">id $UNAME &amp;&gt; /dev/null</span><br><span class="line">if [ $? -eq 0 ]</span><br><span class="line">then</span><br><span class="line">echo &quot;Already exists&quot;</span><br><span class="line">else</span><br><span class="line">useradd $UNAME &amp;&gt; /dev/null</span><br><span class="line">echo &quot;$PASSWD&quot; | passwd --stdin $UNAME &amp;&gt; /dev/null</span><br><span class="line">if [ $? -eq 0 ]</span><br><span class="line">then</span><br><span class="line">echo &quot;Create success&quot;</span><br><span class="line">else</span><br><span class="line">echo &quot;Create failure&quot;</span><br><span class="line">fi</span><br><span class="line">fi</span><br><span class="line">done </span><br><span class="line"></span><br><span class="line"> shell脚本提示用户输入要设置的密码并赋值给PASSWD变量</span><br><span class="line"> 从test.txt文件中读入用户名并赋值给UNAME变量</span><br><span class="line"> 而查看用户的信息都重定向到/dev/null文件，不显示屏幕</span><br></pre></td></tr></table></figure>
+
+<p>2、测试主机是否在线</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">首先创建主机地址列表：</span><br><span class="line">[root@zhou tmp]# vim ipadds.txt</span><br><span class="line">192.168.10.10</span><br><span class="line">192.168.10.11</span><br><span class="line">192.168.10.12</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">HLIST=$(cat /tmp/ipadds.txt)</span><br><span class="line">for IP in $HLIST</span><br><span class="line">do</span><br><span class="line">ping -c 3 -i 0.2 -W 3 $IP &amp;&gt; /dev/null</span><br><span class="line">if [ $? -eq 0 ] ; then</span><br><span class="line">echo &quot;Host $IP is up.&quot;</span><br><span class="line">  se</span><br><span class="line">echo &quot;Host $IP is down.&quot;</span><br><span class="line">fi</span><br><span class="line">done </span><br><span class="line"></span><br><span class="line"> 从ipadds.txt中读取主机地址后赋值给HLIST变量</span><br><span class="line"> 逐个ping列表中的主机IP地址测试主机是否在线</span><br></pre></td></tr></table></figure>
+
+<h4 id="while条件语句"><a href="#while条件语句" class="headerlink" title="while条件语句"></a>while条件语句</h4><p>while条件语句用于测试重复测试某个条件，当小件成立时则继续重复执行</p>
+<p>随机生成0-999的数字，猜数字</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">PRICE=$(expr $RANDOM % 1000)</span><br><span class="line">TIMES=0</span><br><span class="line">echo &quot;randow 0-999&quot;</span><br><span class="line">while true</span><br><span class="line">do</span><br><span class="line">read -p &quot;input numbers: &quot; INT</span><br><span class="line">let TIMES++</span><br><span class="line">if [ $INT -eq $PRICE ] ; then</span><br><span class="line">echo &quot;It&#x27;s $PRICE&quot;</span><br><span class="line">echo &quot;猜了 $TIMES 次&quot;</span><br><span class="line">exit 0</span><br><span class="line">elif [ $INT -gt $PRICE ] ; then</span><br><span class="line">echo &quot;so high&quot;</span><br><span class="line">else</span><br><span class="line">echo &quot;so low&quot;</span><br><span class="line">fi</span><br><span class="line">done </span><br><span class="line"></span><br><span class="line"> let可以使变量进行运算，无需加$</span><br></pre></td></tr></table></figure>
+
+<h4 id="case条件语句"><a href="#case条件语句" class="headerlink" title="case条件语句"></a>case条件语句</h4><p>case条件语句可以依据变量的不同数值，分别执行不同的命令动作</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">read -p &quot;输入一个字符: &quot; KEY</span><br><span class="line">case &quot;$KEY&quot; in</span><br><span class="line">[a-z]|[A-Z])</span><br><span class="line">echo &quot;输入的是字母。&quot;</span><br><span class="line">;;</span><br><span class="line">[0-9])</span><br><span class="line">echo &quot;输入的是数字。&quot;</span><br><span class="line">;;</span><br><span class="line">*)</span><br><span class="line">echo &quot;输入的是其他。&quot;</span><br><span class="line">esac</span><br><span class="line"></span><br><span class="line"> 提示用户输入一个字符，判断该字符是字母、数字或特殊字符</span><br><span class="line"> ;;相当于break的效果，退出</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/06/07/command/" rel="prev" title="command">
+      <i class="fa fa-chevron-left"></i> command
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/06/07/%E7%94%A8%E6%88%B7%E8%BA%AB%E4%BB%BD%E4%B8%8E%E6%96%87%E4%BB%B6%E6%9D%83%E9%99%90/" rel="next" title="用户身份与文件权限">
+      用户身份与文件权限 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AE%A1%E9%81%93%E7%AC%A6%E3%80%81%E9%87%8D%E5%AE%9A%E5%90%91%E4%B8%8E%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-number">1.</span> <span class="nav-text">管道符、重定向与环境变量</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%A1%E9%81%93%E5%91%BD%E4%BB%A4%E7%AC%A6%E2%80%9D-%E2%80%9D"><span class="nav-number">1.1.</span> <span class="nav-text">管道命令符”|”</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E9%87%8D%E5%AE%9A%E5%90%91"><span class="nav-number">1.2.</span> <span class="nav-text">输入输出重定向</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E9%80%9A%E9%85%8D%E7%AC%A6"><span class="nav-number">1.3.</span> <span class="nav-text">命令行通配符</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PATH%E5%8F%98%E9%87%8F"><span class="nav-number">1.4.</span> <span class="nav-text">PATH变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-number">1.5.</span> <span class="nav-text">环境变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%86%E8%A7%A3vim%E7%BC%96%E8%BE%91%E5%99%A8"><span class="nav-number">1.6.</span> <span class="nav-text">了解vim编辑器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%BD%91%E5%8D%A1%E4%BF%A1%E6%81%AF"><span class="nav-number">1.7.</span> <span class="nav-text">配置网卡信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEyum%E4%BB%93%E5%BA%93"><span class="nav-number">1.8.</span> <span class="nav-text">配置yum仓库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%86%E8%A7%A3shell%E8%84%9A%E6%9C%AC"><span class="nav-number">1.9.</span> <span class="nav-text">了解shell脚本</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E7%AE%80%E5%8D%95%E7%9A%84%E8%84%9A%E6%9C%AC"><span class="nav-number">1.9.1.</span> <span class="nav-text">编译简单的脚本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A5%E6%94%B6%E7%94%A8%E6%88%B7%E7%9A%84%E5%8F%82%E6%95%B0"><span class="nav-number">1.9.2.</span> <span class="nav-text">接收用户的参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A4%E6%96%AD%E7%94%A8%E6%88%B7%E7%9A%84%E5%8F%82%E6%95%B0"><span class="nav-number">1.9.3.</span> <span class="nav-text">判断用户的参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9D%A1%E4%BB%B6%E6%B5%8B%E8%AF%95%E8%AF%AD%E5%8F%A5"><span class="nav-number">1.9.4.</span> <span class="nav-text">条件测试语句</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#if%E6%9D%A1%E4%BB%B6%E8%AF%AD%E5%8F%A5"><span class="nav-number">1.9.4.1.</span> <span class="nav-text">if条件语句</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#for%E6%9D%A1%E4%BB%B6%E8%AF%AD%E5%8F%A5"><span class="nav-number">1.9.4.2.</span> <span class="nav-text">for条件语句</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#while%E6%9D%A1%E4%BB%B6%E8%AF%AD%E5%8F%A5"><span class="nav-number">1.9.4.3.</span> <span class="nav-text">while条件语句</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#case%E6%9D%A1%E4%BB%B6%E8%AF%AD%E5%8F%A5"><span class="nav-number">1.9.4.4.</span> <span class="nav-text">case条件语句</span></a></li></ol></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="zhou"
+      src="/images/touxiang.jpg">
+  <p class="site-author-name" itemprop="name">zhou</p>
+  <div class="site-description" itemprop="description">不聚不散</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhou</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共30.5k字</span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

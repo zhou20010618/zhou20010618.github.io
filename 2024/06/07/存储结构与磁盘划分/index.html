@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/icon2.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="存储结构与磁盘划分目录结构主要常见的目录定义：    目录名称 应放置文件的内容    &#x2F;boot 开机所需文件——内核，开机菜单及所需配置文件等   &#x2F;dev 任何设备与接口都以文件形式存放在此目录   &#x2F;etc 配置文件   &#x2F;home 用户主目录   &#x2F;bin 单用户维护模式下还能够被操作的命令   &#x2F;lib 开机时用到的函数库及&amp;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="存储结构与磁盘划分">
+<meta property="og:url" content="http://example.com/2024/06/07/%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84%E4%B8%8E%E7%A3%81%E7%9B%98%E5%88%92%E5%88%86/index.html">
+<meta property="og:site_name" content="颂">
+<meta property="og:description" content="存储结构与磁盘划分目录结构主要常见的目录定义：    目录名称 应放置文件的内容    &#x2F;boot 开机所需文件——内核，开机菜单及所需配置文件等   &#x2F;dev 任何设备与接口都以文件形式存放在此目录   &#x2F;etc 配置文件   &#x2F;home 用户主目录   &#x2F;bin 单用户维护模式下还能够被操作的命令   &#x2F;lib 开机时用到的函数库及&amp;">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-06-07T01:17:39.000Z">
+<meta property="article:modified_time" content="2024-06-07T06:37:24.501Z">
+<meta property="article:author" content="zhou">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2024/06/07/%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84%E4%B8%8E%E7%A3%81%E7%9B%98%E5%88%92%E5%88%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>存储结构与磁盘划分 | 颂</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">颂</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/06/07/%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84%E4%B8%8E%E7%A3%81%E7%9B%98%E5%88%92%E5%88%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/touxiang.jpg">
+      <meta itemprop="name" content="zhou">
+      <meta itemprop="description" content="不聚不散">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="颂">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          存储结构与磁盘划分
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-06-07 09:17:39 / 修改时间：14:37:24" itemprop="dateCreated datePublished" datetime="2024-06-07T09:17:39+08:00">2024-06-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="存储结构与磁盘划分"><a href="#存储结构与磁盘划分" class="headerlink" title="存储结构与磁盘划分"></a>存储结构与磁盘划分</h1><h2 id="目录结构"><a href="#目录结构" class="headerlink" title="目录结构"></a>目录结构</h2><p>主要常见的目录定义：</p>
+<table>
+<thead>
+<tr>
+<th>目录名称</th>
+<th>应放置文件的内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&#x2F;boot</td>
+<td>开机所需文件——内核，开机菜单及所需配置文件等</td>
+</tr>
+<tr>
+<td>&#x2F;dev</td>
+<td>任何设备与接口都以文件形式存放在此目录</td>
+</tr>
+<tr>
+<td>&#x2F;etc</td>
+<td>配置文件</td>
+</tr>
+<tr>
+<td>&#x2F;home</td>
+<td>用户主目录</td>
+</tr>
+<tr>
+<td>&#x2F;bin</td>
+<td>单用户维护模式下还能够被操作的命令</td>
+</tr>
+<tr>
+<td>&#x2F;lib</td>
+<td>开机时用到的函数库及&#x2F;bin与&#x2F;sbin下面命令要调用的函数</td>
+</tr>
+<tr>
+<td>&#x2F;sbin</td>
+<td>开机过程中需要的</td>
+</tr>
+<tr>
+<td>&#x2F;media</td>
+<td>一般挂载或删除的设备</td>
+</tr>
+<tr>
+<td>&#x2F;opt</td>
+<td>放置第三方的软件</td>
+</tr>
+<tr>
+<td>&#x2F;root</td>
+<td>系统管理员的主文件夹</td>
+</tr>
+<tr>
+<td>&#x2F;srv</td>
+<td>一些网络服务的数据目录</td>
+</tr>
+<tr>
+<td>&#x2F;tmp</td>
+<td>任何人均可使用的”共享”临时目录</td>
+</tr>
+<tr>
+<td>&#x2F;proc</td>
+<td>虚拟文件系统，例如系统内核，进程，外部设备及网络状态等</td>
+</tr>
+<tr>
+<td>&#x2F;usr&#x2F;local</td>
+<td>用户自行安装的软件</td>
+</tr>
+<tr>
+<td>&#x2F;usr&#x2F;sbin</td>
+<td>非系统开机时需要的软件&#x2F;命令&#x2F;脚本</td>
+</tr>
+<tr>
+<td>&#x2F;usr&#x2F;share</td>
+<td>帮助与说明文件，也可放置共享文件</td>
+</tr>
+<tr>
+<td>&#x2F;var</td>
+<td>主要存放经常变换的文件，如日志</td>
+</tr>
+<tr>
+<td>&#x2F;lost+found</td>
+<td>当文件系统发生错误事，将一些丢失的文件片段存放在这里</td>
+</tr>
+</tbody></table>
+<p>绝对路径(absolute)：由根目录(&#x2F;)开始写起的目录或文件名</p>
+<p>相对路径(relative)：相对于当前路径的写法</p>
+<span id="more"></span>
+
+<h2 id="物理设备的命名规则"><a href="#物理设备的命名规则" class="headerlink" title="物理设备的命名规则"></a>物理设备的命名规则</h2><p>一般采用三个主分区加一个拓展分区的分发，拓展分区中能够创建无数个逻辑分区</p>
+<p>主分区不能超过四个</p>
+<p>系统内核的设备管理器(Udev)会自动将硬件名称规范起来，让我们可以通过设备名称猜出设备大致的属性以及分区信息等，Udev会一直以守护进程的形式运行并侦听来自内核发出的uevent来管理&#x2F;dev目录下的设备文件</p>
+<p>常见的硬件命名如下：</p>
+<table>
+<thead>
+<tr>
+<th>硬件设备</th>
+<th>文件名称</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IDE设备</td>
+<td>&#x2F;dev&#x2F;hd[a-d]</td>
+</tr>
+<tr>
+<td>SCSI&#x2F;SATA&#x2F;U盘</td>
+<td>&#x2F;dev&#x2F;sd[a-p]</td>
+</tr>
+<tr>
+<td>软驱</td>
+<td>&#x2F;dev&#x2F;df[0-1]</td>
+</tr>
+<tr>
+<td>打印机</td>
+<td>&#x2F;dev&#x2F;lp[0-15]</td>
+</tr>
+<tr>
+<td>光驱</td>
+<td>&#x2F;dev&#x2F;cdrom</td>
+</tr>
+<tr>
+<td>鼠标</td>
+<td>&#x2F;dev&#x2F;mouse</td>
+</tr>
+<tr>
+<td>磁带机</td>
+<td>&#x2F;dev&#x2F;st0或者&#x2F;dev&#x2F;hr0(IDE设备)</td>
+</tr>
+</tbody></table>
+<h2 id="文件系统与数据资料"><a href="#文件系统与数据资料" class="headerlink" title="文件系统与数据资料"></a>文件系统与数据资料</h2><p>每个文件的权限与属性都会记录在inode table中（每个文件都会占用一个独立的 inode 表格，默认为128bytes），记录着：</p>
+<p>    该文件的访问权限（read，write，execute）</p>
+<p>    该文件的所属主与组（owner，group）</p>
+<p>    该文件的大小（size）</p>
+<p>    该文件的创建或状态修改时间（ctime）</p>
+<p>    该文件的最后一次访问时间（atime）</p>
+<p>    该文件的修改时间（mtime）</p>
+<p>    文件的特殊权限（SUID,SGID,SBIT）</p>
+<p>    该文件的真实数据地址（point）</p>
+<h2 id="挂载硬件设备"><a href="#挂载硬件设备" class="headerlink" title="挂载硬件设备"></a>挂载硬件设备</h2><p>挂载操作指的是当用户需要使用硬盘设备或分区数据时，需要先将一个已存在的目录文件做关联，而哲哥动作就叫挂载</p>
+<p>主要命令：mount、umount</p>
+<p>mount是临时挂载，重启后失效，如果想让重启后依然生效，必须修改配置文件&#x2F;etc&#x2F;fstab</p>
+<p>“&#x2F;etc&#x2F;fstab”包含着文件系统与挂载信息等内容，因为过于重要，所以只有root用户才可以编辑它</p>
+<p>填写格式如下：“设备文件 挂载目录 格式类型 权限选项 自检 优先级”</p>
+<blockquote>
+<p>设备文件：一般为设备的路径+名称，也可以写UUID值等</p>
+<p>挂载目录：指定要挂载的目录，需挂载钱创建好</p>
+<p>格式类型：即指定文件系统的格式，比如有ext3&#x2F;ext4&#x2F;xfs&#x2F;iso9660&#x2F;swap等</p>
+<p>权限选项：默认为defaults（rw,suid,dev,exec,auto,nouser,async），可指定acl或quota等</p>
+<p>自检：若为1开机后进行磁盘自检，0为不自检</p>
+<p>优先级：若“自检”为1，则可对多块硬盘进行优先级设置</p>
+</blockquote>
+<p>例：</p>
+<p>定义设备&#x2F;dev&#x2F;sdb2开机自动挂载到&#x2F;backu目录，文件格式ext4，默认权限且无需开机自检</p>
+<blockquote>
+<p>&#x2F;dev&#x2F;sdb2 &#x2F;backup ext4 defaults 0 0</p>
+</blockquote>
+<h2 id="添加硬盘设备"><a href="#添加硬盘设备" class="headerlink" title="添加硬盘设备"></a>添加硬盘设备</h2><p>主要命令：fdisk、mkfs</p>
+<h2 id="swap-交换分区"><a href="#swap-交换分区" class="headerlink" title="swap(交换分区)"></a>swap(交换分区)</h2><p>SWAP即交换分区是一种类似于Windows系统虚拟内存的功能，将一部分硬盘空间虚拟成内存来使用，从而解决内存容量不足的情况，因为SWAP毕竟是用硬盘资源来虚拟的，所以速度上比真实物理内存要慢很多，一般只有当真实的物理内存耗尽时才会调用SWAP</p>
+<h2 id="磁盘冗余阵列"><a href="#磁盘冗余阵列" class="headerlink" title="磁盘冗余阵列"></a>磁盘冗余阵列</h2><p>RAID：即杜丽硬盘组，作用是防止硬盘物理损坏以及增加存储设备的吞吐量，RAID常见的组合有0、1、5、10</p>
+<h3 id="RAID0"><a href="#RAID0" class="headerlink" title="RAID0"></a>RAID0</h3><blockquote>
+<p>RAID0需要至少两块硬盘，可以有效的提高硬盘的性能和吞吐量，但没有数据的冗余和错误修复能力</p>
+<p>多块硬盘串联在一起，数据一次写入各个硬盘，性能极大提升，但任意一块硬盘故障整个系统数据都会受到破坏</p>
+</blockquote>
+<h3 id="RAID1"><a href="#RAID1" class="headerlink" title="RAID1"></a>RAID1</h3><blockquote>
+<p>需要至少两块硬盘，就可以有效的提高数据资料的安全性和可修复性，但成本却提高了</p>
+<p>实现原来是在数据写入硬盘时也会在另外一块闲置的硬盘上生成镜像文件，在不影响性能的情况下最大限度保证数据资料的可靠性，只要在一对镜像盘中还有一块硬盘可以使用，那么数据也不会丢失，具有很好的硬盘冗余能力，虽然对数据来讲绝对的安全，但成本明显增加，磁盘利用率仅为50%</p>
+</blockquote>
+<h3 id="RAID5"><a href="#RAID5" class="headerlink" title="RAID5"></a>RAID5</h3><blockquote>
+<p>至少需要三块硬盘，加固存储性能、数据安全和存储成本</p>
+<p>如上图所示”parity”块中保存的是其他硬盘数据的奇偶校验信息(并非其他硬盘的数据)，以数据的奇偶校验信息来保证数据的安全，RAID5不以单独的硬盘来存放数据的奇偶校验信息，而是保存在各个磁盘上</p>
+<p>这样当任何一个硬盘损坏都可以根据其他硬盘上的奇偶校验信息来尝试重建损坏的数据，性能也很高，兼顾了存储性能，数据安全和存储成本，尅看作是RAID0与RAID1的这种方案</p>
+</blockquote>
+<h3 id="RAID10"><a href="#RAID10" class="headerlink" title="RAID10"></a>RAID10</h3><blockquote>
+<p>需要至少四块硬盘，兼具速度和安全性，但成本很高</p>
+<p>继承了RAID10的快速与RAID1的安全，RAID1在这里提供了冗余备份的阵列，而RAID0则负责数据的读写阵列</p>
+<p>因这种结构的成本高，一般用于存放要求速度与差错控制的数据</p>
+</blockquote>
+<h2 id="逻辑卷管理器"><a href="#逻辑卷管理器" class="headerlink" title="逻辑卷管理器"></a>逻辑卷管理器</h2><p>当用户根据实际情况需要对分区增加、减小等调整时，经常会受到硬盘”灵活性”的限制，很不方便</p>
+<p>逻辑卷管理器则是在磁盘分区与文件系统之间添加的逻辑层，提供一个抽象的卷组，使得管理者可以忽略底层磁盘布局，从而实现对分区的灵活动态调整，这毫不夸张，系统默认启用了LVM机制（Logical Volume Manager）</p>
+<blockquote>
+<p>物理卷（PV,Physical Volume）：整个硬盘设备或使用fdisk命令建立的硬盘分区</p>
+<p>卷组（VG，Volume Group）：由一个或多个物理卷（PV（组成的整体</p>
+<p>逻辑卷（LV，Logical Volume）：从卷组（VG）出切割出的空间来用于创建文件系统，大小由PE的个数决定</p>
+<p>基本单元（PE，Physical Extent）默认为4MB的基本块</p>
+</blockquote>
+<h2 id="虚拟文件系统"><a href="#虚拟文件系统" class="headerlink" title="虚拟文件系统"></a>虚拟文件系统</h2><h2 id="软硬链接"><a href="#软硬链接" class="headerlink" title="软硬链接"></a>软硬链接</h2><p>在linux系统中ln命令能够让用户创建出俩中不同类型的文件快捷方式</p>
+<h3 id="硬链接（hard-link"><a href="#硬链接（hard-link" class="headerlink" title="硬链接（hard link)"></a>硬链接（hard link)</h3><p>可以理解为一个”指向原始文件inode的指针”，系统部位它分配独立的inode与文件，所以实际上来讲硬链接文件与原始文件其实是同一个文件，只是名字不同、</p>
+<p>于是每添加一个硬链接，该文件的inode连接数就会增加1，直到该文件的inode连接数归0才是彻底删除。</p>
+<p>概括来说因为硬链接实际就是指向原文件inode的指针，即使原始文件背删除依然可以通过链接文件访问，但是不能够跨文件系统也不能链接目录文件。</p>
+<h3 id="软链接（symbolic-link）"><a href="#软链接（symbolic-link）" class="headerlink" title="软链接（symbolic link）"></a>软链接（symbolic link）</h3><p>即”仅仅包含它索要链接文件的路径名”，因此能做该目录链接也可以跨越文件系统，但原始文件背删除后链接文件也将失败，如同windows中的”快捷方式”</p>
+<p>ln命令创建链接文件，格式为：ln [选项] 目标</p>
+<p>创建硬链接：”ln 文件名 链接名”</p>
+<p>创建软链接：”ln -s 文件名 链接名”</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/06/07/%E7%94%A8%E6%88%B7%E8%BA%AB%E4%BB%BD%E4%B8%8E%E6%96%87%E4%BB%B6%E6%9D%83%E9%99%90/" rel="prev" title="用户身份与文件权限">
+      <i class="fa fa-chevron-left"></i> 用户身份与文件权限
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/06/07/iptables%E4%B8%8Efirewalld%E9%98%B2%E7%81%AB%E5%A2%99/" rel="next" title="iptables与firewalld防火墙">
+      iptables与firewalld防火墙 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84%E4%B8%8E%E7%A3%81%E7%9B%98%E5%88%92%E5%88%86"><span class="nav-number">1.</span> <span class="nav-text">存储结构与磁盘划分</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84"><span class="nav-number">1.1.</span> <span class="nav-text">目录结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%89%A9%E7%90%86%E8%AE%BE%E5%A4%87%E7%9A%84%E5%91%BD%E5%90%8D%E8%A7%84%E5%88%99"><span class="nav-number">1.2.</span> <span class="nav-text">物理设备的命名规则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%8E%E6%95%B0%E6%8D%AE%E8%B5%84%E6%96%99"><span class="nav-number">1.3.</span> <span class="nav-text">文件系统与数据资料</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%82%E8%BD%BD%E7%A1%AC%E4%BB%B6%E8%AE%BE%E5%A4%87"><span class="nav-number">1.4.</span> <span class="nav-text">挂载硬件设备</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0%E7%A1%AC%E7%9B%98%E8%AE%BE%E5%A4%87"><span class="nav-number">1.5.</span> <span class="nav-text">添加硬盘设备</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#swap-%E4%BA%A4%E6%8D%A2%E5%88%86%E5%8C%BA"><span class="nav-number">1.6.</span> <span class="nav-text">swap(交换分区)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A3%81%E7%9B%98%E5%86%97%E4%BD%99%E9%98%B5%E5%88%97"><span class="nav-number">1.7.</span> <span class="nav-text">磁盘冗余阵列</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RAID0"><span class="nav-number">1.7.1.</span> <span class="nav-text">RAID0</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RAID1"><span class="nav-number">1.7.2.</span> <span class="nav-text">RAID1</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RAID5"><span class="nav-number">1.7.3.</span> <span class="nav-text">RAID5</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RAID10"><span class="nav-number">1.7.4.</span> <span class="nav-text">RAID10</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%BB%E8%BE%91%E5%8D%B7%E7%AE%A1%E7%90%86%E5%99%A8"><span class="nav-number">1.8.</span> <span class="nav-text">逻辑卷管理器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.9.</span> <span class="nav-text">虚拟文件系统</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5"><span class="nav-number">1.10.</span> <span class="nav-text">软硬链接</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A1%AC%E9%93%BE%E6%8E%A5%EF%BC%88hard-link"><span class="nav-number">1.10.1.</span> <span class="nav-text">硬链接（hard link)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BD%AF%E9%93%BE%E6%8E%A5%EF%BC%88symbolic-link%EF%BC%89"><span class="nav-number">1.10.2.</span> <span class="nav-text">软链接（symbolic link）</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="zhou"
+      src="/images/touxiang.jpg">
+  <p class="site-author-name" itemprop="name">zhou</p>
+  <div class="site-description" itemprop="description">不聚不散</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhou</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共30.5k字</span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
