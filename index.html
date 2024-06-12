@@ -19,7 +19,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"manual","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
   <meta name="description" content="不聚不散">
@@ -103,6 +103,7 @@
 
   <div class="site-nav-right">
     <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
     </div>
   </div>
 </div>
@@ -132,11 +133,38 @@
     <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
 
   </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
   </ul>
 </nav>
 
 
 
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
 
 </div>
     </header>
@@ -182,10 +210,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2024-06-11 08:50:44 / 修改时间：10:18:36" itemprop="dateCreated datePublished" datetime="2024-06-11T08:50:44+08:00">2024-06-11</time>
+              <time title="创建时间：2024-06-11 08:50:44" itemprop="dateCreated datePublished" datetime="2024-06-11T08:50:44+08:00">2024-06-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-06-12 09:00:08" itemprop="dateModified" datetime="2024-06-12T09:00:08+08:00">2024-06-12</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -211,131 +245,14 @@
 <p>使用nmtui配置网卡参数、手工将多块网卡做绑定</p>
 <p>使用nmcli命令查看网卡信息</p>
 <p>使用ss命令查看网络及端口状态</p>
-<p>linux操作系统开机过程：</p>
-<blockquote>
-<p>BIOS开始 &gt; 进入”Boot Loader” &gt; 加载内核 &gt; 内核的初始化 &gt;启动初始化进程</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>sysvinit运行级别</th>
-<th>systemd目标名称</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>0</td>
-<td>renlevel0.target,powerff.target</td>
-<td>关机</td>
-</tr>
-<tr>
-<td>1</td>
-<td>runlevel1.target,rescue.target</td>
-<td>单用户模式</td>
-</tr>
-<tr>
-<td>2</td>
-<td>runlevel2.target,multi-user.target</td>
-<td>等同于级别3</td>
-</tr>
-<tr>
-<td>3</td>
-<td>runlevel3.target,multi-user.target</td>
-<td>多用户的文本界面</td>
-</tr>
-<tr>
-<td>4</td>
-<td>runlevel4.target,multi-user.target</td>
-<td>等同于级别3</td>
-</tr>
-<tr>
-<td>5</td>
-<td>runlevel5.target,graphical.target</td>
-<td>多用户的图形界面</td>
-</tr>
-<tr>
-<td>6</td>
-<td>runlevel6.target,reboot.target</td>
-<td>重启</td>
-</tr>
-<tr>
-<td>emergency</td>
-<td>emergency.target</td>
-<td>紧急shell</td>
-</tr>
-</tbody></table>
-<blockquote>
-<p>将默认的运行级别修改为”多用户，无图形模式”</p>
-<p>ln -sf &#x2F;lib&#x2F;systemd&#x2F;system&#x2F;mylti-user.target &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;default.target</p>
-</blockquote>
-<blockquote>
-<p>将默认的运行级别修改为”图形化模式”：</p>
-<p>ln -sf &#x2F;lib&#x2F;systemd&#x2F;system&#x2F;graphical.target &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;default.target</p>
-</blockquote>
-<hr>
-<h3 id="监视资源与管理进程"><a href="#监视资源与管理进程" class="headerlink" title="监视资源与管理进程"></a>监视资源与管理进程</h3><blockquote>
-<p>linux系统的5种不同状态：</p>
-<p>    R（运行）：正在运行或在运行队列中等待</p>
-<p>    S（终端）：休眠中，在等待某个条件的形成或接受到信号</p>
-<p>    D（不可终端）：收到信号不唤醒和不可运行，进程必须等待直到有中断发生</p>
-<p>    Z（将僵死）：进程已终止，但进程描述符存在，直到父进程调用wait40系统调用后释放</p>
-<p>    T（停止）：进程收到SIGSTOP,SIGSTP,SIGTIN,SIGTOU信号后停止运行</p>
-</blockquote>
-<blockquote>
-<p>ps命令：用于查看系统中的进程状态</p>
-<p>格式：”p [参数]”</p>
-</blockquote>
-<p>查看进程与状态：”ps -aux”</p>
-<p>查找某个特定的进程信息：”ps -aux |  grep 进程名”</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>-a</td>
-<td>显示所有额度进程（包括其他用户的）</td>
-</tr>
-<tr>
-<td>-u</td>
-<td>用户以及其他详细信息</td>
-</tr>
-<tr>
-<td>-x</td>
-<td>显示没有控制终端的进程</td>
-</tr>
-</tbody></table>
-<blockquote>
-<p>top命令用于监视进程的活动与系统负载，格式为：”top”</p>
-<p>top命令类似于windows任务管理器</p>
-<p>前面五行为系统整体的统计信息：</p>
-<p>    第一行：系统时间、运行时间、登陆用户数、系统负载（分别为1分钟、5分钟、15分钟的平均值）</p>
-<p>    第二行：进程总数、运行中的，睡眠中的，停止的，僵尸的</p>
-<p>    第三行：用户占用资源，系统内核占用资源，改变过优先级的进程，空闲的资源，等待输入输出的时间</p>
-<p>    <u>此行数据均为CPU数据并以百分比格式显示，例如”99.2 id”意味着有99.2%的CPU资源正在空闲中</u></p>
-<p>    第4行：物理内存总量，使用量，空闲量，作为内核缓存的内存量</p>
-<p>    第5行：虚拟内存总量，使用量，空闲量，已被提前加载的内存数据</p>
-</blockquote>
-<blockquote>
-<p>进程的信息去中包含了各个进程的详细信息，含义如下：</p>
-<p>    PID：进程ID号</p>
-<p>    USER：进程的所有者</p>
-<p>    PR：优先级</p>
-<p>    NI：优先级（负值表示优先级更高）</p>
-<p>    VIRT：虚拟内存使用量</p>
-<p>    RES：物理内存使用量</p>
-<p>    SHR：共享内存大小</p>
-<p>    S：进程状态（上文中有提到）</p>
-<p>    %CPU：运算器的使用百分比</p>
-<p>    %MEM：内存的使用百分比</p>
-<p>    TIME+：使用CPU的时间（单位是1&#x2F;100秒）</p>
-<p>    COMMAND：命令名称</p>
-</blockquote>
-<blockquote>
-</blockquote>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/06/11/%E4%BD%BF%E7%94%A8ssh%E6%9C%8D%E5%8A%A1%E7%AE%A1%E7%90%86%E8%BF%9C%E7%A8%8B%E4%B8%BB%E6%9C%BA/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -5313,7 +5230,7 @@
 
 <div class="theme-info">
   <div class="powered-by"></div>
-  <span class="post-count">博客全站共30.5k字</span>
+  <span class="post-count">博客全站共30.6k字</span>
 </div>
         
 
@@ -5349,6 +5266,10 @@
   
 
 
+
+
+  
+<script src="/js/local-search.js"></script>
 
 
 
